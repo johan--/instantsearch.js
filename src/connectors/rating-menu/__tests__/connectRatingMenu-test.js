@@ -436,48 +436,118 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/rating-menu
   });
 
   describe('getWidgetSearchParameters', () => {
-    test('should return the same SP if no value is in the UI state', () => {
-      const [widget, helper] = getInitializedWidget();
-      const uiState = {};
-      const searchParametersBefore = SearchParameters.make(helper.state);
-      const searchParametersAfter = widget.getWidgetSearchParameters(
-        searchParametersBefore,
-        { uiState }
+    test('returns the `SearchParameters` with the default value', () => {
+      // Uses the function getInitializedWidget once we've removed `getConfiguration`
+      const render = () => {};
+      const makeWidget = connectRatingMenu(render);
+      const helper = jsHelper({}, '');
+      const widget = makeWidget({
+        attribute: 'grade',
+      });
+
+      const actual = widget.getWidgetSearchParameters(helper.state, {
+        uiState: {},
+      });
+
+      expect(actual).toEqual(
+        new SearchParameters({
+          index: '',
+          disjunctiveFacets: ['grade'],
+          disjunctiveFacetsRefinements: {
+            grade: [],
+          },
+        })
       );
-      expect(searchParametersAfter).toBe(searchParametersBefore);
     });
 
-    test('should add the refinements according to the UI state provided', () => {
-      const [widget, helper] = getInitializedWidget();
-      const uiState = {
-        ratingMenu: {
-          grade: '2',
+    test('returns the `SearchParameters` without the previous value', () => {
+      // Uses the function getInitializedWidget once we've removed `getConfiguration`
+      const render = () => {};
+      const makeWidget = connectRatingMenu(render);
+      const helper = jsHelper({}, '', {
+        disjunctiveFacetsRefinements: {
+          grade: ['2', '3', '4', '5'],
         },
-      };
-      const searchParametersBefore = SearchParameters.make(helper.state);
-      const searchParametersAfter = widget.getWidgetSearchParameters(
-        searchParametersBefore,
-        { uiState }
+      });
+
+      const widget = makeWidget({
+        attribute: 'grade',
+      });
+
+      const actual = widget.getWidgetSearchParameters(helper.state, {
+        uiState: {},
+      });
+
+      expect(actual).toEqual(
+        new SearchParameters({
+          index: '',
+          disjunctiveFacets: ['grade'],
+          disjunctiveFacetsRefinements: {
+            grade: [],
+          },
+        })
       );
-      expect(searchParametersAfter).toMatchSnapshot();
     });
 
-    test('should return the same SP if the value is consistent with the UI state', () => {
-      const [widget, helper, refine] = getInitializedWidget();
-      refine('2');
-      const uiState = widget.getWidgetState(
-        {},
-        {
-          searchParameters: helper.state,
-          helper,
-        }
+    test('returns the `SearchParameters` with the value from `uiState`', () => {
+      // Uses the function getInitializedWidget once we've removed `getConfiguration`
+      const render = () => {};
+      const makeWidget = connectRatingMenu(render);
+      const helper = jsHelper({}, '');
+      const widget = makeWidget({
+        attribute: 'grade',
+      });
+
+      const actual = widget.getWidgetSearchParameters(helper.state, {
+        uiState: {
+          ratingMenu: {
+            grade: '3',
+          },
+        },
+      });
+
+      expect(actual).toEqual(
+        new SearchParameters({
+          index: '',
+          disjunctiveFacets: ['grade'],
+          disjunctiveFacetsRefinements: {
+            grade: ['3', '4', '5'],
+          },
+        })
       );
-      const searchParametersBefore = SearchParameters.make(helper.state);
-      const searchParametersAfter = widget.getWidgetSearchParameters(
-        searchParametersBefore,
-        { uiState }
+    });
+
+    test('returns the `SearchParameters` with the value from `uiState` without the previous refinement', () => {
+      const render = () => {};
+      const makeWidget = connectRatingMenu(render);
+      const helper = jsHelper({}, '', {
+        disjunctiveFacets: ['grade'],
+        disjunctiveFacetsRefinements: {
+          grade: ['1', '2', '3', '4', '5'],
+        },
+      });
+
+      const widget = makeWidget({
+        attribute: 'grade',
+      });
+
+      const actual = widget.getWidgetSearchParameters(helper.state, {
+        uiState: {
+          ratingMenu: {
+            grade: '3',
+          },
+        },
+      });
+
+      expect(actual).toEqual(
+        new SearchParameters({
+          index: '',
+          disjunctiveFacets: ['grade'],
+          disjunctiveFacetsRefinements: {
+            grade: ['3', '4', '5'],
+          },
+        })
       );
-      expect(searchParametersAfter).toBe(searchParametersBefore);
     });
   });
 });

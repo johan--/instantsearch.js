@@ -1,6 +1,7 @@
 import {
   checkRendering,
   createDocumentationMessageGenerator,
+  range,
   noop,
 } from '../../lib/utils';
 
@@ -210,24 +211,27 @@ export default function connectRatingMenu(renderFn, unmountFn = noop) {
       },
 
       getWidgetSearchParameters(searchParameters, { uiState }) {
-        const starRatingFromURL =
-          uiState.ratingMenu && uiState.ratingMenu[attribute];
-        const refinedStar = this._getRefinedStar(searchParameters);
+        const value = uiState.ratingMenu && uiState.ratingMenu[attribute];
 
-        if (starRatingFromURL === refinedStar) return searchParameters;
+        const withoutRefinements = searchParameters.clearRefinements(attribute);
+        const withDisjunctiveFacet = withoutRefinements.addDisjunctiveFacet(
+          attribute
+        );
 
-        let clearedSearchParam = searchParameters.clearRefinements(attribute);
-
-        if (starRatingFromURL !== undefined) {
-          for (let val = Number(starRatingFromURL); val <= max; ++val) {
-            clearedSearchParam = clearedSearchParam.addDisjunctiveFacetRefinement(
-              attribute,
-              val
-            );
-          }
+        if (!value) {
+          return withDisjunctiveFacet.setQueryParameters({
+            disjunctiveFacetsRefinements: {
+              ...withDisjunctiveFacet.disjunctiveFacetsRefinements,
+              [attribute]: [],
+            },
+          });
         }
 
-        return clearedSearchParam;
+        return range({ start: Number(value), end: max + 1 }).reduce(
+          (parameters, number) =>
+            parameters.addDisjunctiveFacetRefinement(attribute, number),
+          withDisjunctiveFacet
+        );
       },
 
       _toggleRefinement(helper, facetValue) {
