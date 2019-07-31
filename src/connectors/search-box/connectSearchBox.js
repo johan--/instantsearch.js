@@ -158,8 +158,8 @@ export default function connectSearchBox(renderFn, unmountFn = noop) {
         };
       },
 
-      getWidgetSearchParameters(searchParameters, { uiState }) {
-        return searchParameters.setQueryParameter('query', uiState.query);
+      getWidgetSearchParameters(state, { uiState }) {
+        return state.setQueryParameter('query', uiState.query || '');
       },
     };
   };
